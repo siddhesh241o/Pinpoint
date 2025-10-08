@@ -1,15 +1,16 @@
 package main
 
-import(
-	"os"
+import (
+	"github.com/gocql/gocql"
+	"github.com/joho/godotenv"
 	"log"
 	"net/http"
-	"github.com/joho/godotenv"
-	"github.com/gocql/gocql"
+	"os"
 )
+
 var session *gocql.Session
 
-func init(){
+func init() {
 	var err error
 	if err = godotenv.Load(); err != nil {
 		log.Printf(".env file not found, default used: %v\n", err)
@@ -24,10 +25,12 @@ func init(){
 	log.Println("Successfully connected to Cassandra cluster")
 }
 
-func main(){
+func main() {
 	log.Println("Starting backend server")
 	port := os.Getenv("PORT")
 	mux := http.NewServeMux()
+	mux.HandleFunc("POST /api/pins", createPinHandler)
+	mux.HandleFunc("GET /api/pins/nearby", getNearbyPinsHandler)
 	log.Fatal(http.ListenAndServe(":"+port, mux))
 	defer session.Close()
 }
