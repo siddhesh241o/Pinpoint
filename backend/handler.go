@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gocql/gocql"
@@ -65,5 +67,51 @@ func createPinHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getNearbyPinsHandler(w http.ResponseWriter, r *http.Request) {
-
+	latStr := r.URL.Query().Get("lat")
+	lonStr := r.URL.Query().Get("lon")
+	if(latStr == "" || lonStr == ""){
+		http.Error(w, "Missing lat, lon parameters", http.StatusBadRequest)
+		return
+	}
+	lat, err := strconv.ParseFloat(latStr, 64)
+	if err != nil {
+		http.Error(w, "Invalid lat paramter", http.StatusBadRequest)
+		return
+	}
+	lon, err := strconv.ParseFloat(lonStr, 64)
+	if err != nil {
+		http.Error(w, "Invalid lon parameter", http.StatusBadRequest)
+		return
+	}
+	currentPrefix := getGeohashPrefix(lat, lon)
+	prefixToQuery := getNeighbouringGeoHashes(currentPrefix)
+	log.Printf("Querying for geohash prefixes: %v", prefixToQuery)
+	var wg sync.WaitGroup
+	pinChan := make(chan Pin, 100)
+	query := `SELECT pin_id, latitude, longitude, message, creation_time FROM geohash_pins WHERE geohash_prefix = ?`
+	for _, prefix := range prefixToQuery {
+		wg.Add(1)
+		go func(p string){
+			defer wg.Done()
+			iter := session.Query(query, p).Iter()
+			var pin Pin
+			var creationTime time.Time
+			for iter.Scan(&pin.PinID, &pin.Latitude, &pin.Longitude, &pin.Message, &creationTime){
+				pin.CreationTime = creationTime.Unix()
+				pinChan <- pin
+			}
+			if err := iter.Close(); err != nil {
+				log.Printf("Error querying prefix %s: %v",p, err)
+			}
+		}(prefix)
+	}
+	wg.Wait()
+	close(pinChan)
+	allPins := []Pin{}
+	for pin := range pinChan {
+		allPins = append(allPins, pin)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(allPins)
 }
