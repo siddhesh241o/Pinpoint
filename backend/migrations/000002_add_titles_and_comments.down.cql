@@ -1,0 +1,1 @@
+ALTER TABLE pinpoint.geohash_pins DROP title;

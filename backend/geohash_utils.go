@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	geohashPrecision = 5
+	geohashPrecision = 6
 )
 
 func getGeohashPrefix(lat, lon float64) string {

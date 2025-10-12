@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS pinpoint.comments_by_pin;
