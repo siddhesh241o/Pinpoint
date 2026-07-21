@@ -8,7 +8,7 @@
 -   **Nearby Discovery:** Automatically find pins near your current location or any searched area using efficient **Geohashing**.
 -   **Temporary Pins:** Set a Time-to-Live (TTL) for your pins (from 1 to 72 hours), after which they automatically expire.
 -   **Community Engagement:** Comment on pins to start discussions or provide updates.
--   **Search:** Quickly jump to different locations using the built-in search bar (powered by Nominatim).
+-   **Search:** Quickly jump to different locations using the builtin search bar (powered by Nominatim).
 -   **Anonymous Identity:** Automatic persistent user identity for seamless interaction.
 
 ## 🚀 Tech Stack
